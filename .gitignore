@@ -1,2 +1,4 @@
 input/*
 !input/.gitkeep
+models/*
+!models/.gitkeep
