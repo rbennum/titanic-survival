@@ -37,3 +37,45 @@ class FamilySizeBinner(BaseEstimator, TransformerMixin):
 
         return df_temp
 
+class TitleFeatureExtractor(BaseEstimator, TransformerMixin):
+    """
+    A custom transformer to engineer a 'Title' feature from the 'Name' column.
+    
+    It extracts, cleans, and consolidates titles, grouping rare titles into a
+    single 'Rare' category based on the training data distribution.
+    """
+    def __init__(self, name_col='Name', title_col='Title', rare_threshold_ref='Master'):
+        self.name_col = name_col
+        self.title_col = title_col
+        self.rare_threshold_ref = rare_threshold_ref
+
+    def _clean_title(self, title):
+        if title in ['Ms', 'Mlle']:
+            return 'Miss'
+        if title in ['Mme', 'Lady']:
+            return 'Mrs'
+        return title
+
+    def fit(self, X, y=None):
+        df_temp = X.copy()
+        titles = (
+            df_temp[self.name_col]
+            .str.extract(r' ([A-Za-z]+)\.', expand=False)
+            .apply(self._clean_title)
+        )
+        counts = titles.value_counts()
+        threshold = counts.get(self.rare_threshold_ref, 0)
+        self.rare_titles_ = counts[counts < threshold].index.tolist()
+
+        return self
+
+    def transform(self, X):
+        df_temp = X.copy()
+        titles = (
+            df_temp[self.name_col]
+            .str.extract(r' ([A-Za-z]+)\.', expand=False)
+            .apply(self._clean_title)
+        )
+        df_temp[self.title_col] = titles.replace(self.rare_titles_, 'Rare')
+
+        return df_temp
