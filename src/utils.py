@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 
 def skim_data(data) -> pd.DataFrame:
     """
@@ -34,3 +35,12 @@ def skim_data(data) -> pd.DataFrame:
     print(f'DF shape: {data.shape}')
 
     return skimmed_data
+
+def create_submission(passenger_ids, predictions):
+    submission_df = pd.DataFrame({
+        'PassengerId': passenger_ids,
+        'Survived': predictions
+    })
+    filename = f'input/submission_{time.time()}.csv'
+    submission_df.to_csv(filename, index=False)
+    print(f"\nSubmission file '{filename}' created successfully!")
