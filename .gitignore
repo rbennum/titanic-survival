@@ -3,3 +3,5 @@ input/*
 models/*
 !models/.gitkeep
 **__pycache__/
+**/.venv/
+**/.vscode/
