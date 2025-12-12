@@ -1,3 +1,7 @@
 # Titanic Survival Prediction
 
-- First exploration: [here](notebooks/explorations.ipynb). Result on Kaggle: **`0.77033`**.
+See my [latest exploration](notebooks/advanced_fe.ipynb).
+
+Latest result on Kaggle: **`0.77751`**.
+
+My personal high score: **`0.78229`**.
