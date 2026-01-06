@@ -79,9 +79,12 @@ def predict_survival(passenger: Passenger):
         probability = model.predict_proba(processed_df)[0]
         survival_probability = probability[1]
 
+        logger.debug(model.predict(processed_df))
+        logger.debug(model.predict_proba(processed_df))
+
         return {
-            "prediction": "Survived" if prediction == 1 else "Did not survive",
-            "survived": bool(prediction == 1),
+            "prediction": "Survived" if prediction == "1" else "Did not survive",
+            "survived": bool(prediction == "1"),
             "survival_probability": float(survival_probability),
         }
     except Exception as e:
