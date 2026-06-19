@@ -6,3 +6,4 @@ models/*
 **/.venv/
 **/.vscode/
 **/*.csv
+**/.ipynb_checkpoints/
