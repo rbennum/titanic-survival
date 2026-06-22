@@ -9,3 +9,7 @@ scipy
 seaborn
 shap
 streamlit
+fastparquet
+
+# editable mode
+-e .
