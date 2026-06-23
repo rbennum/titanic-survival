@@ -1,7 +1,11 @@
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
+from sklearn.linear_model import LogisticRegression
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.stats.diagnostic import het_breuschpagan
 
 
 class TitleTransformer(BaseEstimator, TransformerMixin):
@@ -217,3 +221,66 @@ class AutoSkewnessTransformer(BaseEstimator, TransformerMixin):
             )
         )
         return np.array(features, dtype=object)
+
+
+class DiagnosticLogisticRegression(BaseEstimator, ClassifierMixin):
+    def __init__(self, penalty="l2", C=1.0, solver="lbfgs", max_iter=100):
+        self.penalty = penalty
+        self.C = C
+        self.solver = solver
+        self.max_iter = max_iter
+        self.model = None
+        self.vif_df_ = None
+        self.dw_stat_ = None
+        self.bp_pvalue_ = None
+
+    def fit(self, X, y):
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
+        # Calculate Multicollinearity (VIF)
+        vif_data = pd.DataFrame()
+        vif_data["feature"] = X.columns
+        X_const = sm.add_constant(X, has_constant="add")
+        vif_data["VIF"] = [
+            variance_inflation_factor(X_const.values, i)  # type: ignore
+            for i in range(1, X_const.shape[1])
+        ]
+        self.vif_df_ = vif_data
+
+        # Instantiate and fit the actual baseline model
+        self.model = LogisticRegression(
+            penalty=self.penalty,  # type: ignore
+            C=self.C,
+            solver=self.solver,  # type: ignore
+            max_iter=self.max_iter,
+            random_state=42,
+        )
+        self.model.fit(X, y)
+
+        # Calculate Residuals for Statistical Tests
+        preds_proba = self.model.predict_proba(X)[:, 1]
+        residuals = y - preds_proba
+
+        # Autocorrelation (Durbin-Watson)
+        # Target: ~2.0 implies no autocorrelation
+        self.dw_stat_ = sm.stats.stattools.durbin_watson(residuals)
+
+        # Heteroskedasticity (Breusch-Pagan)
+        # Note: Handled on the residuals relative to the feature matrix
+        try:
+            _, pval, _, _ = het_breuschpagan(residuals, X_const)
+            self.bp_pvalue_ = pval
+        except:
+            self.bp_pvalue_ = np.nan  # Safeguard against singular matrices
+
+        return self
+
+    def predict(self, X):
+        return self.model.predict(X)  # type: ignore
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)  # type: ignore
+
+    def classes_(self):
+        return self.model.classes_  # type: ignore

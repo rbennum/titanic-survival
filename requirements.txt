@@ -10,6 +10,7 @@ seaborn
 shap
 streamlit
 fastparquet
+statsmodels
 
 # editable mode
 -e .
